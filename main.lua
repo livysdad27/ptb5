@@ -1,103 +1,113 @@
+-- Police Turtle Bob 5
+-- The Turtle gets a gig
+-- Code by Billy art by Scarlet
+-- 12/29/2016
+
+-- module includes
 Camera = require "hump.camera"
 local anim8 = require 'anim8'
 local bump = require 'bump'
 local sti = require 'sti'
 local image, animation
 
+-- Initialize some stuff, window size, bump world, set gravity, load the level and set the collision layer.
 love.window.setMode(600, 400)
 local world = bump.newWorld(50)
-x = 0 
-y = 0
-dx = 0
-dy = 0
-faceRight = false
-accel = 60
-dccel = 10
-jumpAccel = 900
 grav = 20 
-mx = 200 
+map = sti("level.lua", { "bump"})
+map:bump_init(world)
 
-function canJump()
+-- Start the "Bobject" here.  This is the encapculation of the player.
+bob = {}
+bob.x = 0
+bob.y = 0
+bob.dx = 0
+bob.dy = 0
+bob.faceright = false
+bob.accel = 60
+bob.dccel = 10
+bob.jumpAccel = 900
+bob.mx = 200
+
+-- Find out of Bob can jump
+function bob:canJump()
   local cols
-  x, y, cols, cols_len = world:check(animation, x, y+1)  
+  bob.x, bob.y, cols, cols_len = world:check(animation, bob.x, bob.y+1)  
   if cols_len > 0 then
-    dy = 0
+    bob.dy = 0
     return true
   else
     return false
   end
 end
 
+-- Move Bob while detecting collisions
+function bob:move(dt) 
+    local cols
+    bob.x, bob.y, cols, cols_len = world:move(animation, bob.x, bob.y + ((bob.dy + grav) * dt))
+    if cols_len > 0 then bob.dy = 0 end
+    bob.x, bob.y, cols, cols_len = world:move(animation, bob.x + (bob.dx*dt), bob.y)
+end
+
+-- Input code
+-- todo:  Turn this into a keyboard input pump and move the logic to the bobject
 function getCmd()
-  if canJump() and love.keyboard.isDown("up") then
-    dy = - jumpAccel 
-  elseif not canJump() then
-    dy = dy + grav
+  if bob:canJump() and love.keyboard.isDown("up") then
+    bob.dy = - bob.jumpAccel 
+  elseif not bob:canJump() then
+    bob.dy = bob.dy + grav
   end
 
   if love.keyboard.isDown("left") then
-    if faceRight then
+    if bob.faceRight then
       animation:flipH() 
-      faceRight = false
+      bob.faceRight = false
     end
-    dx = math.max(dx - accel, - mx)
+    bob.dx = math.max(bob.dx - bob.accel, - bob.mx)
   elseif love.keyboard.isDown("right") then
-    if not faceRight then
+    if not bob.faceRight then
       animation:flipH()
-      faceRight = true
+      bob.faceRight = true
     end
-    dx = math.min(dx + accel, mx)
+    bob.dx = math.min(bob.dx + bob.accel, bob.mx)
   else
-    if dx > 0 then
-      dx = dx - dccel
-    elseif dx < 0 then
-      dx = dx + dccel 
+    if bob.dx > 0 then
+      bob.dx = bob.dx - bob.dccel
+    elseif bob.dx < 0 then
+      bob.dx = bob.dx + bob.dccel 
     end
   end
 end
 
-function moveBird(dt) 
-    local cols
-    x, y, cols, cols_len = world:move(animation, x, y + ((dy + grav) * dt))
-    if cols_len > 0 then dy = 0 end
-    x, y, cols, cols_len = world:move(animation, x + (dx*dt), y)
-end
-
+-- Obligatory get out of dodge code
 function love.keypressed(k)
   if k=="escape" then love.event.quit() end
 end
 
-function leftRight()
-  if dx > 0 then
-  elseif dx < 0 then
-  end
-end
-    
-map = sti("level.lua", { "bump"})
-map:bump_init(world)
 
+-- These are the love callbacks!!!!!!!!!!!!!!!!!!
 function love.load()
-  camera = Camera(x, y)
+  camera = Camera(bob.x, bob.y)
   image = love.graphics.newImage('bob.png')
   local g = anim8.newGrid(32, 32, image:getWidth(), image:getHeight())
   animation = anim8.newAnimation(g('1-11', 1), .05)
-  world:add(animation, x, y, 32, 32)
+  world:add(animation, bob.x, bob.y, 32, 32)
 end
 
 function love.update(dt)
   getCmd()
-  moveBird(dt)
-  camera:lookAt(x, y)
+  bob:move(dt)
+  camera:lookAt(bob.x, bob.y)
   map:update(dt)
-  if dx ~= 0 then
+  if bob.dx ~= 0 then
     animation:update(dt)
   end
-  world:update(animation, x, y, 32, 32)
+  world:update(animation, bob.x, bob.y, 32, 32)
 end
 
 function love.draw()
   camera:attach()
   map:draw()
-  animation:draw(image, x, y)
+  animation:draw(image, bob.x, bob.y)
   camera:detach()
 end
