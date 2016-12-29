@@ -32,7 +32,7 @@ bob.mx = 200
 -- Find out of Bob can jump
 function bob:canJump()
   local cols
-  bob.x, bob.y, cols, cols_len = world:check(animation, bob.x, bob.y+1)  
+  bob.x, bob.y, cols, cols_len = world:check(bob.runAnim, bob.x, bob.y+1)  
   if cols_len > 0 then
     bob.dy = 0
     return true
@@ -44,11 +44,18 @@ end
 -- Move Bob while detecting collisions
 function bob:move(dt) 
     local cols
-    bob.x, bob.y, cols, cols_len = world:move(animation, bob.x, bob.y + ((bob.dy + grav) * dt))
+    bob.x, bob.y, cols, cols_len = world:move(bob.runAnim, bob.x, bob.y + ((bob.dy + grav) * dt))
     if cols_len > 0 then bob.dy = 0 end
-    bob.x, bob.y, cols, cols_len = world:move(animation, bob.x + (bob.dx*dt), bob.y)
+    bob.x, bob.y, cols, cols_len = world:move(bob.runAnim, bob.x + (bob.dx*dt), bob.y)
 end
 
+function bob:init()
+  image = love.graphics.newImage('bob.png')
+  local g = anim8.newGrid(32, 32, image:getWidth(), image:getHeight())
+  bob.runAnim = anim8.newAnimation(g('1-11', 1), .05)
+  world:add(bob.runAnim, bob.x, bob.y, 32, 32)
+  camera = Camera(bob.x, bob.y)
+end
 -- Input code
 -- todo:  Turn this into a keyboard input pump and move the logic to the bobject
 function getCmd()
@@ -60,13 +67,13 @@ function getCmd()
 
   if love.keyboard.isDown("left") then
     if bob.faceRight then
-      animation:flipH() 
+      bob.runAnim:flipH() 
       bob.faceRight = false
     end
     bob.dx = math.max(bob.dx - bob.accel, - bob.mx)
   elseif love.keyboard.isDown("right") then
     if not bob.faceRight then
-      animation:flipH()
+      bob.runAnim:flipH()
       bob.faceRight = true
     end
     bob.dx = math.min(bob.dx + bob.accel, bob.mx)
@@ -84,14 +91,9 @@ function love.keypressed(k)
   if k=="escape" then love.event.quit() end
 end
 
-
 -- These are the love callbacks!!!!!!!!!!!!!!!!!!
 function love.load()
-  camera = Camera(bob.x, bob.y)
-  image = love.graphics.newImage('bob.png')
-  local g = anim8.newGrid(32, 32, image:getWidth(), image:getHeight())
-  animation = anim8.newAnimation(g('1-11', 1), .05)
-  world:add(animation, bob.x, bob.y, 32, 32)
+  bob:init()
 end
 
 function love.update(dt)
@@ -100,14 +102,14 @@ function love.update(dt)
   camera:lookAt(bob.x, bob.y)
   map:update(dt)
   if bob.dx ~= 0 then
-    animation:update(dt)
+    bob.runAnim:update(dt)
   end
-  world:update(animation, bob.x, bob.y, 32, 32)
+  world:update(bob.runAnim, bob.x, bob.y, 32, 32)
 end
 
 function love.draw()
   camera:attach()
   map:draw()
-  animation:draw(image, bob.x, bob.y)
+  bob.runAnim:draw(image, bob.x, bob.y)
   camera:detach()
 end
