@@ -17,6 +17,32 @@ grav = 20
 map = sti("level.lua", { "bump"})
 map:bump_init(world)
 
+-- Start the "npcobject" here.  This is the encapculation of the player.
+npc = {}
+npc.__index = npc
+
+function npc:new(x, y)
+  self = setmetatable({}, npc)
+  self.x = x 
+  self.y = y 
+  self.dx = 0
+  self.dy = 0
+  self.faceright = false
+  self.accel = 60
+  self.dccel = 10
+  self.jumpAccel = 900
+  self.mx = 200
+  self.image = love.graphics.newImage('bird.png')
+  return self
+end
+
+function npc:init()
+  local g = anim8.newGrid(20, 20, self.image:getWidth(), self.image:getHeight())
+  self.runAnim = anim8.newAnimation(g('1-8', 1), .05)
+  world:add(self.runAnim, self.x, self.y, 20, 20)
+end
+
+wildBird = npc.new(300, 600)
 -- Start the "Bobject" here.  This is the encapculation of the player.
 bob = {}
 bob.x = 0
@@ -28,6 +54,7 @@ bob.accel = 60
 bob.dccel = 10
 bob.jumpAccel = 900
 bob.mx = 200
+bob.image = love.graphics.newImage('bob.png')
 
 -- Find out of Bob can jump
 function bob:canJump()
@@ -50,12 +77,12 @@ function bob:move(dt)
 end
 
 function bob:init()
-  image = love.graphics.newImage('bob.png')
-  local g = anim8.newGrid(32, 32, image:getWidth(), image:getHeight())
+  local g = anim8.newGrid(32, 32, bob.image:getWidth(), bob.image:getHeight())
   bob.runAnim = anim8.newAnimation(g('1-11', 1), .05)
   world:add(bob.runAnim, bob.x, bob.y, 32, 32)
   camera = Camera(bob.x, bob.y)
 end
+
 -- Input code
 -- todo:  Turn this into a keyboard input pump and move the logic to the bobject
 function getCmd()
@@ -110,6 +137,6 @@ end
 function love.draw()
   camera:attach()
   map:draw()
-  bob.runAnim:draw(image, bob.x, bob.y)
+  bob.runAnim:draw(bob.image, bob.x, bob.y)
   camera:detach()
 end
