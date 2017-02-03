@@ -21,7 +21,7 @@ map:bump_init(world)
 npc = {}
 npc.__index = npc
 
-function npc:new(x, y)
+function npc.new(x, y)
   self = setmetatable({}, npc)
   self.x = x 
   self.y = y 
@@ -37,12 +37,13 @@ function npc:new(x, y)
 end
 
 function npc:init()
-  local g = anim8.newGrid(20, 20, self.image:getWidth(), self.image:getHeight())
+  local g = anim8.newGrid(32, 32, self.image:getWidth(), self.image:getHeight())
   self.runAnim = anim8.newAnimation(g('1-8', 1), .05)
-  world:add(self.runAnim, self.x, self.y, 20, 20)
+  world:add(self.runAnim, self.x, self.y, 32, 32)
 end
 
-wildBird = npc.new(300, 600)
+wildBird = npc.new(300, 900)
+print(wildBird.y)
 -- Start the "Bobject" here.  This is the encapculation of the player.
 bob = {}
 bob.x = 0
@@ -121,6 +122,7 @@ end
 -- These are the love callbacks!!!!!!!!!!!!!!!!!!
 function love.load()
   bob:init()
+  wildBird:init()
 end
 
 function love.update(dt)
@@ -128,6 +130,7 @@ function love.update(dt)
   bob:move(dt)
   camera:lookAt(bob.x, bob.y)
   map:update(dt)
+  wildBird.runAnim:update(dt)
   if bob.dx ~= 0 then
     bob.runAnim:update(dt)
   end
@@ -138,5 +141,6 @@ function love.draw()
   camera:attach()
   map:draw()
   bob.runAnim:draw(bob.image, bob.x, bob.y)
+  wildBird.runAnim:draw(wildBird.image, wildBird.x, wildBird.y)
   camera:detach()
 end
