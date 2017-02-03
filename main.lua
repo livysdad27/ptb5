@@ -17,46 +17,13 @@ grav = 20
 map = sti("level.lua", { "bump"})
 map:bump_init(world)
 
--- Start the "birdject" here.  This is a class to encapculate bad guys.
-npc = {}
-npc.__index = npc
-
-function npc.new(x, y, dx, dy, faceRight, jumpAccel, accel, dccel)
-  self = setmetatable({}, npc)
-  self.x = x
-  self.y = y
-  self.dx = dx
-  self.dy = dy
-  self.faceRight = faceRight
-  self.jumpAccel = jumpAccel
-  self.accel = accel
-  self.dccel = dccel
-  return self
-end
-
--- Move NPC move while detecting collisions
-function npc:move(dt) 
-    local cols
-    self.x, self.y, cols, cols_len = world:move(self.flyAnim, self.x, self.y + ((self.dy + grav) * dt))
-    if cols_len > 0 then self.dy = 0 end
-    self.x, self.y, cols, cols_len = world:move(self.flyAnim, self.x + (self.dx*dt), self.y)
-end
-
-function npc:init()
-  self.image = love.graphics.newImage('bird.png')
-  self.g = anim8.newGrid(32, 32, self.image:getWidth(), self.image:getHeight())
-  self.flyAnim = anim8.newAnimation(self.g('1-8', 1), .05)
---  world:add(self.runAnim, self.x, self.y, 32, 32)
-end
-
-wildBird = npc:new(100, 100, 0, 0, false, 0, 0, 0)
 -- Start the "Bobject" here.  This is the encapculation of the player.
 bob = {}
 bob.x = 0
 bob.y = 0
 bob.dx = 0
 bob.dy = 0
-bob.faceRight = false
+bob.faceright = false
 bob.accel = 60
 bob.dccel = 10
 bob.jumpAccel = 900
@@ -65,9 +32,9 @@ bob.mx = 200
 -- Find out of Bob can jump
 function bob:canJump()
   local cols
-  self.x, self.y, cols, cols_len = world:check(self.runAnim, self.x, self.y+1)  
+  bob.x, bob.y, cols, cols_len = world:check(bob.runAnim, bob.x, bob.y+1)  
   if cols_len > 0 then
-    self.dy = 0
+    bob.dy = 0
     return true
   else
     return false
@@ -77,20 +44,18 @@ end
 -- Move Bob while detecting collisions
 function bob:move(dt) 
     local cols
-    self.x, self.y, cols, cols_len = world:move(self.runAnim, self.x, self.y + ((self.dy + grav) * dt))
-    if cols_len > 0 then self.dy = 0 end
-    self.x, self.y, cols, cols_len = world:move(self.runAnim, self.x + (self.dx*dt), self.y)
+    bob.x, bob.y, cols, cols_len = world:move(bob.runAnim, bob.x, bob.y + ((bob.dy + grav) * dt))
+    if cols_len > 0 then bob.dy = 0 end
+    bob.x, bob.y, cols, cols_len = world:move(bob.runAnim, bob.x + (bob.dx*dt), bob.y)
 end
 
 function bob:init()
-  self.image = love.graphics.newImage('bob.png')
-  self.g = anim8.newGrid(32, 32, self.image:getWidth(), self.image:getHeight())
-  self.runAnim = anim8.newAnimation(self.g('1-11', 1), .05)
-  world:add(self.runAnim, self.x, self.y, 32, 32)
-  camera = Camera(self.x, self.y) 
+  image = love.graphics.newImage('bob.png')
+  local g = anim8.newGrid(32, 32, image:getWidth(), image:getHeight())
+  bob.runAnim = anim8.newAnimation(g('1-11', 1), .05)
+  world:add(bob.runAnim, bob.x, bob.y, 32, 32)
+  camera = Camera(bob.x, bob.y)
 end
-
-
 -- Input code
 -- todo:  Turn this into a keyboard input pump and move the logic to the bobject
 function getCmd()
@@ -129,7 +94,6 @@ end
 -- These are the love callbacks!!!!!!!!!!!!!!!!!!
 function love.load()
   bob:init()
-  wildBird:init()
 end
 
 function love.update(dt)
@@ -141,13 +105,11 @@ function love.update(dt)
     bob.runAnim:update(dt)
   end
   world:update(bob.runAnim, bob.x, bob.y, 32, 32)
-  world:update(wildBird.flyAnim, wildBird.x, wildBird.y, 32, 32)
 end
 
 function love.draw()
   camera:attach()
   map:draw()
-  bob.runAnim:draw(self.image, bob.x, bob.y)
-  wildBird.flyAnim:draw(self.image, wildBird.x, wildBird.y)
+  bob.runAnim:draw(image, bob.x, bob.y)
   camera:detach()
 end
