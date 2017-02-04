@@ -25,7 +25,7 @@ function npc.new(x, y)
   self = setmetatable({}, npc)
   self.x = x 
   self.y = y 
-  self.dx = 0
+  self.dx = 20 
   self.dy = 0
   self.faceright = false
   self.accel = 60
@@ -41,9 +41,13 @@ function npc:init()
   self.runAnim = anim8.newAnimation(g('1-8', 1), .05)
   world:add(self.runAnim, self.x, self.y, 32, 32)
 end
+ 
+function npc:move(dt)
+    local cols
+    self.x, self.y, cols, cols_len = world:move(self.runAnim, self.x + (self.dx * dt), self.y)
+end
 
 wildBird = npc.new(300, 900)
-print(wildBird.y)
 -- Start the "Bobject" here.  This is the encapculation of the player.
 bob = {}
 bob.x = 0
@@ -128,6 +132,7 @@ end
 function love.update(dt)
   getCmd()
   bob:move(dt)
+  wildBird:move(dt)
   camera:lookAt(bob.x, bob.y)
   map:update(dt)
   wildBird.runAnim:update(dt)
